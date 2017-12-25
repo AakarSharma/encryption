@@ -1,9 +1,16 @@
+//var q = require("../hex_operations.js");
 var sha256 = require('sha256');
 var fs=require('fs');
 var readlineSync = require('readline-sync')
 var cryptoXor = require('crypto-xor');
+var express = require('express');
+var app = express();
 var request = require('request');
-
+var bodyParser = require("body-parser");
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 function d2h(d) {
     return d.toString(16);
 }
@@ -62,7 +69,7 @@ function database()
 
 function register_mobile()
 {
-    var clientHost = "localhost:8088";    
+    var clientHost = "localhost:8080";    
     var uid = readlineSync.question('Enter the your username: ');
     var password = readlineSync.question('Enter the your password: ');
     var m_conf = fs.readFileSync('./mobile.config', "utf-8");
@@ -79,7 +86,7 @@ function register_mobile()
         T:Date.now(),
         m_mobile_id:m_conf.m_mobile_id
     }
-        
+    
     var clientServerOptions = {
         uri: 'http://'+clientHost+''+"/registration_mobile",
         body: JSON.stringify(postData),
@@ -98,4 +105,41 @@ function register_mobile()
         }
     });
 }
-register_mobile();
+function login(){  
+    var m_conf = fs.readFileSync('./mobile.config', "utf-8");
+    var m_conf=JSON.parse(m_conf); 
+    var data = fs.readFileSync('./mobile.data', "utf-8");
+    var data=JSON.parse(data); 
+    var temp_user_id=readlineSync.question('Enter your username : ');
+    var temp_user_password=readlineSync.question('Enter your password : ');
+    var temp_m_user_id=sha256(OR_Hex(d2h(data.m_r),stringtoHex(temp_user_id)));
+    var temp_m_user_password=sha256(OR_Hex(d2h(data.m_r),stringtoHex(temp_user_password)));     
+    if(temp_m_user_id==data.m_user_id)
+    {       
+        var temp_xi=sha256(OR_Hex(temp_m_user_password,stringtoHex(m_conf.mobile_password)));
+        var xi=sha256(OR_Hex(data.m_user_password,stringtoHex(m_conf.mobile_password)));
+        if(temp_xi==xi)
+        {   
+            var send_auth_to_sensor =
+            {
+                "T1":Date.now()/1000,
+                "m_mobile_id":m_conf.m_mobile_id,
+                "m_user_id":data.m_user_id
+            }        
+            var sensorMobileOptions = {
+                uri: 'http://'+"localhost:8082"+''+"/login_sensor_side",
+                body: JSON.stringify(send_auth_to_sensor),
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+            request(sensorMobileOptions, function (error, response) 
+            {                 
+                obj1=response.body;
+                console.log(obj1)
+            })
+        } 
+    }                        
+}
+login();

@@ -1,4 +1,7 @@
+//var q = require("../hex_operations.js");
 var fs=require('fs');
+var sha256 = require('sha256');
+var cryptoXor = require('crypto-xor');
 var express = require('express');
 var app = express();
 var request = require('request');
@@ -43,7 +46,7 @@ function stringtoHex (tmp) {
 }
 app.post('/registration_sensor', function (req, res) 
 {
-    var clientHost = "localhost:8088";
+    var clientHost = "localhost:8080";
     obj = req.body;
     var m_conf = fs.readFileSync('./mobile.config', "utf-8");
     var m_conf=JSON.parse(m_conf);
@@ -83,4 +86,59 @@ app.post('/registration_sensor', function (req, res)
         });
     }
 });
-app.listen(8080,function(){console.log('Mobile has started')});
+app.post('/login_sensor', function (req, res) 
+{       
+    obj = req.body;
+    var m_conf = fs.readFileSync('./mobile.config', "utf-8");
+    var m_conf=JSON.parse(m_conf); 
+    var data = fs.readFileSync('./mobile.data', "utf-8");
+    var data=JSON.parse(data);
+    var xi=sha256(OR_Hex(data.m_user_password,stringtoHex(m_conf.mobile_password)));
+    var ei=cryptoXor.encode(data.f_mobile,xi)     
+    if(Date.now()/1000-obj.T2<1)
+    {
+        var Zj=obj.Zj; //going to used below
+        var postData={
+            "T2":obj.T2,
+            "T3":Date.now()/1000,
+            "ei":ei,
+            "Aj":obj.Aj,
+            "m_sensor_id":obj.m_sensor_id,
+            "m_mobile_id":m_conf.m_mobile_id
+        }
+        var clientServerOptions = {
+            uri: 'http://'+"localhost:8080"+''+"/login",
+            body: JSON.stringify(postData),
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }
+        request(clientServerOptions, function (error, response)
+        {
+                obj1=JSON.parse(response.body);
+                if(Date.now()/1000-obj1.T4<1)
+                {
+                    var temp_Hi=sha256(OR_Hex(OR_Hex(data.f_mobile,stringtoHex(m_conf.mobile_password)),d2h(obj1.T4)));
+                    if(temp_Hi==obj1.Hi)
+                    {   
+                        var T5=Date.now()/1000;
+                        var fj=cryptoXor.decode(obj1.Fij,sha256(OR_Hex(data.f_mobile,stringtoHex(m_conf.mobile_password))))
+                        var Kj=cryptoXor.encode(Zj,fj)
+                        var Ki=""+Math.floor(Math.random()*1000);
+                        var Rij=cryptoXor.encode(sha256(OR_Hex(OR_Hex(fj,m_conf.m_mobile_id),d2h(T5))),Ki)
+                        var SK=sha256(cryptoXor.encode(Ki,Kj)) //maybe write this in a file for future use 
+                        var data_send=
+                        {                    
+                            "T4":obj1.T4,
+                            "T5":T5,
+                            "Rij":Rij,
+                            "Sj":obj1.Sj
+                        }
+                        res.send(data_send);
+                    }
+                }
+        });
+    }                
+});
+app.listen(8081,function(){console.log('Mobile has started')});

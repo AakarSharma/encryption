@@ -1,9 +1,9 @@
+//var q = require("../hex_operations.js");
 var sha256 = require('sha256');
 var express = require('express');
 var app = express();
 var fs=require('fs');
 var cryptoXor = require('crypto-xor');
-var math=require('mathjs')
 var bodyParser = require("body-parser");
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
@@ -142,9 +142,10 @@ app.post('/registration_sensor', function (req, res)
     temp.f_mobile=data[i].f_mobile;
     temp.x_mobile=data[i].x_mobile;
     temp.user_id=data[i].user_id;
+    temp.m_user_id=data[i].m_user_id;
     temp.sensor_id=s_data[q].sensor_id;
     temp.sensor_password=s_data[q].sensor_password;
-
+    
     if((Date.now()/1000)-obj.T <1)
     {
         var rm= cryptoXor.decode(obj.mn,temp.sensor_password);
@@ -167,4 +168,49 @@ app.post('/registration_sensor', function (req, res)
     }
     res.send(data_send);    
 });
-app.listen(8088,function(){console.log('Server has started')});
+app.post('/login', function (req, res) 
+{
+    var obj = req.body;
+    var m_data_file = fs.readFileSync('./mobile_data.json', "utf-8");
+    var m_data=JSON.parse(m_data_file); 
+    for(var i=0;i <m_data.length;i++)
+    {
+        if(m_data[i].m_mobile_id==obj.m_mobile_id)
+        break;
+    }
+    var data= fs.readFileSync('./server.data', "utf-8");
+    data=JSON.parse(data);
+    for(var j=0;j <data.length;j++)
+    {
+        if(m_data[i].mobile_id==data[j].mobile_id)
+        break;
+    }
+    var xi,fj,xj,Fij,Hi,Sj;  
+    var T4=Date.now()/1000; 
+    if(T4-obj.T3<1)
+    {
+        xj=cryptoXor.decode(obj.Aj,sha256(OR_Hex(OR_Hex(stringtoHex(data[j].sensor_password),data[j].m_user_id),d2h(obj.T2))));
+        if(xj==data[j].x_sensor)
+        {
+            fi=sha256(OR_Hex(data[j].m_user_id,stringtoHex(server_password)));
+            xi=cryptoXor.decode(obj.ei,fi);
+            if(xi==data[j].x_mobile)
+            {
+                Fij= cryptoXor.encode(data[j].f_sensor,sha256(OR_Hex(fi,stringtoHex(data[j].mobile_password))));
+                Hi=sha256(OR_Hex(OR_Hex(fi,stringtoHex(data[j].mobile_password)),d2h(T4)));
+                Sj=sha256(OR_Hex(OR_Hex(xj,stringtoHex(data[j].sensor_password)),d2h(T4)));
+                data_send={
+                    "Fij":Fij,
+                    "Hi":Hi,
+                    "Sj":Sj,
+                    "T4":T4
+                }
+                res.send(data_send);
+            }
+        }
+    }    
+});
+
+
+
+app.listen(8080,function(){console.log('Server has started')});

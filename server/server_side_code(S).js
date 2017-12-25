@@ -1,3 +1,4 @@
+//var q = require("../hex_operations.js");
 var fs=require('fs');
 var readlineSync = require('readline-sync')
 var sha256 = require('sha256')
@@ -84,4 +85,4 @@ function make_sensor_data(i)
     }
     return temp  
 }
-registration_sensor();
+registration_mobile();

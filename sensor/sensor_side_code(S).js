@@ -1,3 +1,4 @@
+//var q = require("../hex_operations.js");
 var sha256 = require('sha256');
 var fs=require('fs');
 var express = require('express');
@@ -68,9 +69,9 @@ var database = function()
     this.s_r="";
 }
 
-function sensor_mobile()
+function register_sensor()
 {
-    var clientHost = "localhost:8080";
+    var clientHost = "localhost:8081";
     var s_conf = fs.readFileSync('./sensor.config', "utf-8");
     var s_conf=JSON.parse(s_conf);  
     var data=new database();
@@ -103,4 +104,4 @@ function sensor_mobile()
         }
     });
 }
-sensor_mobile();
+register_sensor();
