@@ -39,25 +39,39 @@ function stringtoHex (tmp) {
 }
 
 function registration_sensor()
-{   
+{
+    var defer = q.defer();   
     var data=[];
     var s_number=readlineSync.question('Enter the number of sensor devices you want register: ');
     for( var i=0;i<s_number;i++)
     {
-       data.push(make_sensor_data(i));
+        data.push(make_sensor_data(i));
     }
-    fs.writeFile('./sensor_data.json',JSON.stringify(data),function (err) {if (err) return console.log(err);})
+    fs.writeFile('./sensor_data.json',JSON.stringify(data),function (err) {
+        if (err) console.log(err);
+        defer.resolve({
+            data:""
+        });
+    })
+    return defer.promise; 
 }
 
 function registration_mobile()
 {
+    var defer = q.defer();
     var data=[];
     var m_number=readlineSync.question('Enter the number of mobile devices you want register:');
     for( var i=0;i<m_number;i++)
     {
         data.push(make_mobile_data(i));
     } 
-    fs.writeFile('./mobile_data.json',JSON.stringify(data),function (err) {if (err) return console.log(err);})
+    fs.writeFile('./mobile_data.json',JSON.stringify(data),function (err) {
+        if (err) console.log(err);
+        defer.resolve({
+            data:""
+        });
+    })
+    return defer.promise; 
 }
 
 function make_mobile_data(i)
@@ -85,4 +99,27 @@ function make_sensor_data(i)
     }
     return temp  
 }
-registration_mobile();
+function main()
+{
+    var n=4;    
+    while(n!=3)
+    {
+        n = readlineSync.question('Enter 1 to publish mobiles\nEnter 2 to publish sensor\nEnter 3 to exit\n');
+        switch(n)
+        {
+            case '1':{
+                registration_mobile().then(function()
+                {
+                    break;
+                })
+            }
+            case '2':{
+                registration_sensor().then(function()
+                {
+                    break;
+                })
+            }
+        }
+    }
+}
+main();

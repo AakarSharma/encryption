@@ -36,10 +36,10 @@ function OR_Hex(a, b) {
 
 function stringtoHex (tmp) {
     var str = '',
-        i = 0,
-        tmp_len = tmp.length,
-        c;
- 
+    i = 0,
+    tmp_len = tmp.length,
+    c;
+    
     for (; i < tmp_len; i += 1) {
         c = tmp.charCodeAt(i);
         str += d2h(c) + '';
@@ -49,11 +49,11 @@ function stringtoHex (tmp) {
 
 function hexToString (tmp) {
     var arr = tmp.split(' '),
-        str = '',
-        i = 0,
-        arr_len = arr.length,
-        c;
- 
+    str = '',
+    i = 0,
+    arr_len = arr.length,
+    c;
+    
     for (; i < arr_len; i += 1) {
         c = String.fromCharCode( h2d( arr[i] ) );
         str += c;
@@ -61,7 +61,7 @@ function hexToString (tmp) {
     return str;
 }
 
-var database = function()
+function database()
 {  
     this.m_mobile_id="";
     this.m_user_id="";
@@ -71,6 +71,7 @@ var database = function()
 
 function register_sensor()
 {
+    var defer = q.defer();
     var clientHost = "localhost:8081";
     var s_conf = fs.readFileSync('./sensor.config', "utf-8");
     var s_conf=JSON.parse(s_conf);  
@@ -99,9 +100,30 @@ function register_sensor()
             data.f_sensor=cryptoXor.decode(obj.e,x);
             data.m_mobile_id=obj.m_mobile_id;
             data.m_user_id=obj.m_user_id;
-            fs.writeFile('./sensor.data', JSON.stringify(data) , 'utf-8');
-            return;
+            fs.writeFile('./sensor.data', JSON.stringify(data) , function(){
+                defer.resolve({
+                    data:""
+                });
+            });
         }
     });
+    return defer.promise; 
 }
-register_sensor();
+function main()
+{
+    var n=4;    
+    while(n!=2)
+    {
+        n = readlineSync.question('Enter 1 to register sensor\nEnter 2 to exit\n');
+        switch(n)
+        {
+            case '1':{
+                register_sensor().then(function()
+                {
+                    break;
+                })
+            }
+        }
+    }
+}
+main();;

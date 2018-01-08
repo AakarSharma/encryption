@@ -1,4 +1,5 @@
 //var q = require("../hex_operations.js");
+var Sync = require('sync');
 var sha256 = require('sha256');
 var fs=require('fs');
 var readlineSync = require('readline-sync')
@@ -69,6 +70,7 @@ function database()
 
 function register_mobile()
 {
+    var defer = q.defer();
     var clientHost = "localhost:8080";    
     var uid = readlineSync.question('Enter the your username: ');
     var password = readlineSync.question('Enter the your password: ');
@@ -101,11 +103,17 @@ function register_mobile()
         {
             var x=sha256(OR_Hex(data.m_user_password,stringtoHex(m_conf.mobile_password)));
             data.f_mobile= cryptoXor.decode(obj.e,x);
-            fs.writeFile('./mobile.data',JSON.stringify(data) , 'utf-8');
+            fs.writeFile('./mobile.data',JSON.stringify(data) , function(){
+                defer.resolve({
+                    data:""
+                });
+            });
         }
     });
+    return defer.promise;
 }
 function login(){  
+    var defer = q.defer();
     var m_conf = fs.readFileSync('./mobile.config', "utf-8");
     var m_conf=JSON.parse(m_conf); 
     var data = fs.readFileSync('./mobile.data', "utf-8");
@@ -138,8 +146,38 @@ function login(){
             {                 
                 obj1=response.body;
                 console.log(obj1)
+                defer.resolve({
+                    data:""
+                });
             })
         } 
-    }                        
+    } 
+    return defer.promise;                       
 }
-login();
+function main()
+{
+    var n=4;    
+    while(n!=3)
+    {
+        n = readlineSync.question('Enter 1 to register\nEnter 2 to login\nEnter 3 to exit\n');
+        console.log(n);
+        switch(n)
+        {
+            case '1':
+            {
+                register_mobile().then(function()
+                {
+                    break;
+                })
+            }
+            case '2':
+            {
+                login().then(function()
+                {
+                    break;
+                })
+            }
+        }   
+    }
+}
+main();
